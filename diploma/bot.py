@@ -1,5 +1,6 @@
 import telebot
 from processors.recognition import get_info
+from processors.image_preprocessor import filter_noise
 
 from setup import telegram_token
 
@@ -29,4 +30,4 @@ def process_photo(message):
         print(downloaded_image) # TODO: remove
         bot.send_message(
             user_id,
-            get_info(downloaded_image)[0].description)
+            get_info(filter_noise(downloaded_image))[0].description)

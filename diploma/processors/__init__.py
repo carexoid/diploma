@@ -1,4 +1,5 @@
 __all__ = [
-        'recognition',
+        'image_preprocessor',
+        'recognition'
         ]
 
