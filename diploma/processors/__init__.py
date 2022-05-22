@@ -1,1 +1,4 @@
-import recognition
+__all__ = [
+        'recognition',
+        ]
+

@@ -1,4 +1,5 @@
 import telebot
+from processors.recognition import get_info
 
 from setup import telegram_token
 
@@ -16,6 +17,16 @@ def start(message):
 
 @bot.message_handler(content_types=["photo"])
 def process_photo(message):
+    user_id = message.from_user.id
+
     bot.send_message(
-        message.from_user.id,
+        user_id,
         "Processing your picture...")
+
+    if len(message.photo) != 0:
+        image_info = bot.get_file(message.photo[0].file_id)
+        downloaded_image = bot.download_file(image_info.file_path)
+        print(downloaded_image) # TODO: remove
+        bot.send_message(
+            user_id,
+            get_info(downloaded_image)[0].description)
