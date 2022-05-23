@@ -28,6 +28,7 @@ def process_photo(message):
         image_info = bot.get_file(message.photo[0].file_id)
         downloaded_image = bot.download_file(image_info.file_path)
         print(downloaded_image) # TODO: remove
+        image_info = get_info(filter_noise(downloaded_image))
         bot.send_message(
             user_id,
-            get_info(filter_noise(downloaded_image))[0].description)
+            "Score: {}, Description: {}".format(image_info[0].score, image_info[0].description))
