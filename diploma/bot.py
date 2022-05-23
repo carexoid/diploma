@@ -1,6 +1,7 @@
 import telebot
 from processors.recognition import get_info
 from processors.image_preprocessor import filter_noise
+from processors.description_processor import get_description
 
 from setup import telegram_token
 
@@ -25,10 +26,19 @@ def process_photo(message):
         "Processing your picture...")
 
     if len(message.photo) != 0:
-        image_info = bot.get_file(message.photo[0].file_id)
-        downloaded_image = bot.download_file(image_info.file_path)
-        print(downloaded_image) # TODO: remove
+        image_file = bot.get_file(message.photo[0].file_id)
+        downloaded_image = bot.download_file(image_file.file_path)
         image_info = get_info(filter_noise(downloaded_image))
-        bot.send_message(
-            user_id,
-            "Score: {}, Description: {}".format(image_info[0].score, image_info[0].description))
+
+        if len(image_info) != 0 and image_info[0].score > 0.9:
+            image_description = None
+
+            current_result = 0
+            while image_description is None and image_info[current_result].score >= 0.9:
+                image_description = get_description(image_info[current_result].description)
+
+            if image_description is not None:
+                bot.send_message(user_id, image_description)
+                return
+
+        bot.send_message(user_id, "Please, take a better picture of an art")
