@@ -1,7 +1,7 @@
 import telebot
 from processors.recognition import get_info
 from processors.image_preprocessor import filter_noise
-from processors.description_processor import get_description
+from processors.description_processor import get_search_results
 
 from setup import telegram_token
 
@@ -17,6 +17,9 @@ def start(message):
         "Just send me the photo of it")
 
 
+last_response_for_user = dict()
+
+
 @bot.message_handler(content_types=["photo"])
 def process_photo(message):
     user_id = message.from_user.id
@@ -28,17 +31,38 @@ def process_photo(message):
     if len(message.photo) != 0:
         image_file = bot.get_file(message.photo[0].file_id)
         downloaded_image = bot.download_file(image_file.file_path)
-        image_info = get_info(filter_noise(downloaded_image))
+        filtered_image = filter_noise(downloaded_image)
+        image_info = get_info(filtered_image)
 
-        if len(image_info) != 0 and image_info[0].score > 0.9:
-            image_description = None
+        def results_validator(image_info):
+            return len(image_info) != 0 and image_info[0].score > 0.9;
+
+        if not results_validator(image_info):
+            # retry recognizing image
+            image_info = get_info(filtered_image)
+
+        if results_validator(image_info):
+            found_images = []
 
             current_result = 0
-            while image_description is None and image_info[current_result].score >= 0.9:
-                image_description = get_description(image_info[current_result].description)
+            while len(found_images) == 0 and image_info[current_result].score >= 0.9:
+                found_images = get_search_results(image_info[current_result].description)
 
-            if image_description is not None:
-                bot.send_message(user_id, image_description)
-                return
+            keyboard = telebot.types.InlineKeyboardMarkup()
 
-        bot.send_message(user_id, "Please, take a better picture of an art")
+            i = 0
+            for image in found_images:
+                i += 1
+                keyboard.add(telebot.types.InlineKeyboardButton(text=i, callback_data=i))
+
+            bot.send_media_group(
+                user_id,
+                list(map(lambda element: telebot.types.InputMediaPhoto(element.image), found_images)))
+            bot.send_message(user_id, "Choose piece of art, that looks like one you just sent", reply_markup=keyboard)
+        else:
+            bot.send_message(user_id, "Please, take a better picture of an art")
+
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_inline(call):
+    user_id = call.message.from_user.id
