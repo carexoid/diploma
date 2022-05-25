@@ -21,6 +21,7 @@ def get_description(art_name):
 
     return description
 
+
 auth_url = "https://www.wikiart.org/en/Api/2/login?accessCode={}&secretCode={}"\
     .format(setup.api_access_key, setup.api_secret_key)
 
@@ -38,5 +39,18 @@ def get_search_results(art_name):
     return list(map(lambda element: ShortDescription(element["id"], element["image"]), response_json["data"][:10]))
 
 
+def get_full_info_by_id(art_id):
+    url = "https://www.wikiart.org/en/api/2/Painting?id={}&imageFormat=Large".format(art_id)
+
+    response_json = requests.get(url).json()
+
+    return "Title: {}\nArtist: {}\nYear: {}\nDescription:\n\n{}"\
+        .format(
+            response_json["title"],
+            response_json["artistName"],
+            response_json["completitionYear"],
+            (lambda desc: desc if len(desc) < 500 else "{}...".format(desc[:500]))(response_json["description"]))
+
+
 if __name__ == "__main__":
-    print(get_search_results("The scream"))
+    print(get_full_info_by_id(get_search_results("The scream")[0].id))

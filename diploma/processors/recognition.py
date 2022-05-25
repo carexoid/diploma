@@ -10,7 +10,6 @@ client = vision.ImageAnnotatorClient()
 def get_info(photo):
     image = vision.Image(content=photo)
 
-    # TODO: apply geo params to raise accuracy of detection
     web_detection_params = vision.WebDetectionParams(
         include_geo_results=True)
     image_context = vision.ImageContext(

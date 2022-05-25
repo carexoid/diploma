@@ -1,7 +1,7 @@
 import telebot
 from processors.recognition import get_info
 from processors.image_preprocessor import filter_noise
-from processors.description_processor import get_search_results
+from processors.description_processor import get_search_results, get_full_info_by_id
 
 from setup import telegram_token
 
@@ -15,9 +15,6 @@ def start(message):
         "Hi, I am Art Recognition Bot! "
         "I will help you find information about an art object! "
         "Just send me the photo of it")
-
-
-last_response_for_user = dict()
 
 
 @bot.message_handler(content_types=["photo"])
@@ -53,7 +50,7 @@ def process_photo(message):
             i = 0
             for image in found_images:
                 i += 1
-                keyboard.add(telebot.types.InlineKeyboardButton(text=i, callback_data=i))
+                keyboard.add(telebot.types.InlineKeyboardButton(text=i, callback_data=image.id))
 
             bot.send_media_group(
                 user_id,
@@ -65,4 +62,6 @@ def process_photo(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
-    user_id = call.message.from_user.id
+    user_id = call.message.chat.id
+
+    bot.send_message(user_id, get_full_info_by_id(call.data))
